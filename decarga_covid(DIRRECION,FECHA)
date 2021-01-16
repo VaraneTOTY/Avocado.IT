@@ -1,0 +1,69 @@
+using Printf, CSV, JuliaDB, Distributions, OnlineStats, DataFrames, Dates, Plots, PyCall, HTTP, ZipFile, Logging, TerminalLoggers, Dates
+
+#Barra de progreso
+global_logger(TerminalLogger(right_justify=120))
+
+#Dirrecion inf. covid mas actualizada http://datosabiertos.salud.gob.mx/gobmx/salud/datos_abiertos/datos_abiertos_covid19.zip
+#Dirreccion comprimido para test https://file-examples-com.github.io/uploads/2017/02/zip_2MB.zip
+covidActual = "http://datosabiertos.salud.gob.mx/gobmx/salud/datos_abiertos/datos_abiertos_covid19.zip" 
+
+#Descomprime archivo, regresa la direccion del archivo
+#unzip(ARCHIVO_COMPRIMIDO, DIRECCION_DESCOMPRIMIR)
+function unzip(rar,pathS="")
+    local pathC = ""
+    rzip = ZipFile.Reader(rar)
+    for i in rzip.files
+        path = joinpath(pathS,i.name)
+        if (endswith(i.name,"/") || endswith(i.name,"\\"))
+            rm(path, force=true, recursive=true)
+            mkdir(path)
+            if isempty(pathC)
+                pathC = path
+            end
+        else
+            write(path, read(i))
+            if isempty(pathC)
+                pathC = path
+            end
+        end
+    end
+    close(rzip)
+    rm(rar)
+    return pathC
+end
+
+#Regresa string URL de descarga 
+#links_covid(FECHA)
+function links_covid(f="")
+    ff = DateFormat("dd-mm-yyyy")
+    fe = Date(f,ff)
+    if string(Dates.year(fe)) == "2020"
+        return covidLink = string("http://datosabiertos.salud.gob.mx/gobmx/salud/datos_abiertos/historicos/",
+            @sprintf("%02d",Dates.month(fe)),"/datos_abiertos_covid19_",
+            @sprintf("%02d",Dates.day(fe)),".",
+            @sprintf("%02d",Dates.month(fe)),".2020.zip")
+    elseif string(Dates.year(fe)) == "2021"
+        return covidLink = string("http://datosabiertos.salud.gob.mx/gobmx/salud/datos_abiertos/historicos/2021/",
+            @sprintf("%02d",Dates.month(fe)),"/datos_abiertos_covid19_",
+            @sprintf("%02d",Dates.day(fe)),".",
+            @sprintf("%02d",Dates.month(fe)),".2021.zip")
+    end
+end
+
+#Descarga archivo covid, regresa la dirrecion del archivo
+#descargar_covid(DIRECCION,FECHA), si no se especifica DIRECCION el archivo se guarda en la carpeta actual, si no se especifica FECHA se obtienen los datos mas actualizados
+#FECHA formato dia-mes-año ejem."15-1-2020"
+function descargar_covid(path="",f="")
+    if isempty(path)
+        path = pwd()
+    end
+    if isempty(f)
+        covidLink = covidActual
+    else
+        covidLink = links_covid(f)
+    end
+    rar = HTTP.download(covidLink, path)
+    return unzip(rar, path)
+end
+
+covid=descargar_covid()
