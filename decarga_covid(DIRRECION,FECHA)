@@ -53,7 +53,7 @@ function descargar_covid(path="",f="")
     if isempty(f)
         covidLink = covidActual
     else
-        covidLink = linksCovid(f)
+        covidLink = links_Covid(f)
     end
     pathC = joinpath(path,"covid")
     rm(pathC, force=true, recursive=true)
