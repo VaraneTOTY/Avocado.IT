@@ -1,6 +1,8 @@
 using Printf, CSV, JuliaDB, Distributions, OnlineStats, DataFrames, Dates, Plots, PyCall, HTTP, ZipFile, Logging, TerminalLoggers, Dates, XLSX
 
+#Modulo para descomprimir archivos de python
 zipfile = pyimport("zipfile")
+
 #Barra de progreso
 global_logger(TerminalLogger(right_justify=120))
 
@@ -62,8 +64,11 @@ function descargar_covid(path="",f="")
     return unzip(rar, pathC)
 end
 
+#Datos de CONEVAL 2008 al 2018
 conevalLink = "https://www.coneval.org.mx/Medicion/MP/Documents/Pobreza_18/AE_nacional_estatal_2008_2018.zip"
 
+#Descarga los datos relevantes del CONEVAL, regresa direccion del archivo
+#descargar_coneval(DIRECCION), si no se especifica DIRECCION el archivo se guarda en la carpeta actual
 function descargar_coneval(path="")
     if isempty(path)
         path = pwd()
@@ -75,8 +80,11 @@ function descargar_coneval(path="")
     return unzip(rar, pathC)
 end
 
+#Datos intensidad migratoria por municipios, 2010
 imLink = "http://www.omi.gob.mx/work/models/OMI/Resource/538/1/images/IIM2010_BASEMUN.xls"
 
+#Descarga los datos del Observatorio de Migración Internacional, regresa direccion del archivo
+#descargar_im(DIRECCION), si no se especifica DIRECCION el archivo se guarda en la carpeta actual
 function descargar_im(path="")
     if isempty(path)
         path = pwd()
@@ -88,17 +96,19 @@ function descargar_im(path="")
     return rar
 end
 
-function descargar(path="")
+#Combina las funciones de descarga
+#descargar_datos(DIRECCION), si no se especifica DIRECCION se ocupa la carpeta actual
+function descargar_datos(path="")
     if isempty(path)
         path = pwd()
     end
     pathC = joinpath(path,"Descargables")
     rm(pathC, force=true, recursive=true)
     mkdir(pathC)
-    descargar_covid()
-    descargar_im()
-    descargar_coneval()
+    descargar_covid(pathC)
+    descargar_im(pathC)
+    descargar_coneval(pathC)
     return pathC
 end
 
-prueba = descargar()
+prueba = descargar_datos()
