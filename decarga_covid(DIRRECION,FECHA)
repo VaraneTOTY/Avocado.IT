@@ -1,5 +1,6 @@
-using Printf, CSV, JuliaDB, Distributions, OnlineStats, DataFrames, Dates, Plots, PyCall, HTTP, ZipFile, Logging, TerminalLoggers, Dates
+using Printf, CSV, JuliaDB, Distributions, OnlineStats, DataFrames, Dates, Plots, PyCall, HTTP, ZipFile, Logging, TerminalLoggers, Dates, XLSX
 
+zipfile = pyimport("zipfile")
 #Barra de progreso
 global_logger(TerminalLogger(right_justify=120))
 
@@ -11,24 +12,16 @@ covidActual = "http://datosabiertos.salud.gob.mx/gobmx/salud/datos_abiertos/dato
 #unzip(ARCHIVO_COMPRIMIDO, DIRECCION_DESCOMPRIMIR)
 function unzip(rar,pathS="")
     local pathC = ""
-    rzip = ZipFile.Reader(rar)
-    for i in rzip.files
-        path = joinpath(pathS,i.name)
-        if (endswith(i.name,"/") || endswith(i.name,"\\"))
-            rm(path, force=true, recursive=true)
-            mkdir(path)
-            if isempty(pathC)
+    rzip = zipfile.ZipFile(rar)
+    for i in rzip.namelist()
+        path = joinpath(pathS,i)
+        if isempty(pathC)
                 pathC = path
-            end
-        else
-            write(path, read(i))
-            if isempty(pathC)
-                pathC = path
-            end
         end
+        rzip.extract(i, pathS)
     end
-    close(rzip)
-    rm(rar)
+    rzip.close()
+    rm(rar, force=true, recursive=true)
     return pathC
 end
 
@@ -66,4 +59,43 @@ function descargar_covid(path="",f="")
     return unzip(rar, path)
 end
 
-covid=descargar_covid()
+conevalLink = "https://www.coneval.org.mx/Medicion/MP/Documents/Pobreza_18/AE_nacional_estatal_2008_2018.zip"
+
+function descargar_coneval(path="")
+    if isempty(path)
+        path = pwd()
+    end
+    pathC = joinpath(path,"coneval")
+    rm(pathC, force=true, recursive=true)
+    mkdir(pathC)
+    rar = HTTP.download(conevalLink, pathC)
+    return unzip(rar, pathC)
+end
+
+imLink = "http://www.omi.gob.mx/work/models/OMI/Resource/538/1/images/IIM2010_BASEMUN.xls"
+
+function descargar_im(path="")
+    if isempty(path)
+        path = pwd()
+    end
+    pathC = joinpath(path,"Intensidad Migratoria")
+    rm(pathC, force=true, recursive=true)
+    mkdir(pathC)
+    rar = HTTP.download(imLink, pathC)
+    return rar
+end
+
+function descargar(path="")
+    if isempty(path)
+        path = pwd()
+    end
+    pathC = joinpath(path,"Descargables")
+    rm(pathC, force=true, recursive=true)
+    mkdir(pathC)
+    descargar_covid()
+    descargar_im()
+    descargar_coneval()
+    return pathC
+end
+
+prueba = descargar()
