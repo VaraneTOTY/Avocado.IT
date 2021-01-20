@@ -53,10 +53,13 @@ function descargar_covid(path="",f="")
     if isempty(f)
         covidLink = covidActual
     else
-        covidLink = links_covid(f)
+        covidLink = linksCovid(f)
     end
-    rar = HTTP.download(covidLink, path)
-    return unzip(rar, path)
+    pathC = joinpath(path,"covid")
+    rm(pathC, force=true, recursive=true)
+    mkdir(pathC)
+    rar = HTTP.download(covidLink, pathC)
+    return unzip(rar, pathC)
 end
 
 conevalLink = "https://www.coneval.org.mx/Medicion/MP/Documents/Pobreza_18/AE_nacional_estatal_2008_2018.zip"
