@@ -23,7 +23,7 @@ end
 
 #Regresa string URL de descarga 
 #links_covid(FECHA)
-function linksCovid(f="")
+function links_Covid(f="")
     ff = DateFormat("dd-mm-yyyy")
     fe = Date(f,ff)
     if string(Dates.year(fe)) == "2020"
